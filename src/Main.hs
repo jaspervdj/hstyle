@@ -28,10 +28,17 @@ hstyle = HStyle
     , files = def &= args 
     }
 
+-- | Convert CmdArgs configuration to cleaner datatype
+toOptions :: HStyle -> Options
+toOptions hs = Options
+    { optionsFix   = fix hs
+    , optionsQuiet = quiet hs
+    }
+
 -- | Simple main that takes one command-line parameter of "check" or "fix" and
 -- a list of files to be checked.
 main :: IO ()
 main = do
     config <- cmdArgs hstyle
-    ok <- all fileOk <$> mapM (checkStyle $ quiet config) (files config)
+    ok <- all fileOk <$> mapM (checkStyle $ toOptions config) (files config)
     exitWith $ if ok then ExitSuccess else ExitFailure 1
