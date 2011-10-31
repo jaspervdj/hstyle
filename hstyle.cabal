@@ -27,6 +27,12 @@ Executable hstyle
     HStyle.Alignment
     HStyle.Block
     HStyle.Checker
+    HStyle.Fixer
+    HStyle.Rule
+    HStyle.Rules.LineLength
+    HStyle.Rules.Tabs
+    HStyle.Rules.TrailingWhiteSpace
+    HStyle.Rules.TypeSigAlignment
     HStyle.Selector
 
   Build-depends:

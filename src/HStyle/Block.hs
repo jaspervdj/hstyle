@@ -21,7 +21,7 @@ import qualified Data.Text as T
 data Block = Block
     { blockOffset :: Int
     , blockLines  :: Vector Text
-    } deriving (Show)
+    } deriving (Eq, Show)
 
 fromText :: Text -> Block
 fromText text = Block

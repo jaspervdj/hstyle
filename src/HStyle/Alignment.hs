@@ -18,9 +18,9 @@ checkAlignmentHead alignment
         T.pack (show $ nub $ map snd heads)
   where
     alignment' = filter (not . null) alignment
-    heads	   = map head alignment'
+    heads      = map head alignment'
 
-equal :: Eq a   
+equal :: Eq a
       => [a]
       -> Bool
 equal (x : y : r)
