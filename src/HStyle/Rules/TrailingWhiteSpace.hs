@@ -15,14 +15,14 @@ import HStyle.Rule
 import HStyle.Selector
 
 trailingWhiteSpaceRule :: Rule
-trailingWhiteSpaceRule =
-    (selectLines, trailingWhiteSpaceChecker, trailingWhiteSpaceFixer)
+trailingWhiteSpaceRule = Rule
+    selectLines trailingWhiteSpaceChecker trailingWhiteSpaceFixer
 
-trailingWhiteSpaceChecker :: Checker
-trailingWhiteSpaceChecker = checkLines $ \line ->
+trailingWhiteSpaceChecker :: Checker ()
+trailingWhiteSpaceChecker = checkLines $ \() line ->
     if not (T.null line) && isSpace (T.last line)
         then Just "Trailing whitespace"
         else Nothing
 
-trailingWhiteSpaceFixer :: Fixer
-trailingWhiteSpaceFixer = fixLines T.stripEnd
+trailingWhiteSpaceFixer :: Fixer ()
+trailingWhiteSpaceFixer = fixLines $ const T.stripEnd

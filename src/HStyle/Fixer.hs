@@ -9,10 +9,10 @@ import Data.Text (Text)
 import HStyle.Block
 
 -- | Takes a block and fixes it, if possible
-type Fixer = Block -> Maybe Block
+type Fixer a = a -> Block -> Maybe Block
 
-fixNothing :: Fixer
-fixNothing = const Nothing
+fixNothing :: Fixer a
+fixNothing = const $ const Nothing
 
-fixLines :: (Text -> Text) -> Fixer
-fixLines f = Just . mapLines f
+fixLines :: (a -> Text -> Text) -> Fixer a
+fixLines f x = Just . mapLines (f x)

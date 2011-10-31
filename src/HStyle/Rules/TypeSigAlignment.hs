@@ -15,16 +15,17 @@ import HStyle.Rule
 import HStyle.Selector
 
 typeSigAlignmentRule :: Rule
-typeSigAlignmentRule = (typeSigSelector, typeSigAlignmentChecker, fixNothing)
+typeSigAlignmentRule = Rule typeSigSelector typeSigAlignmentChecker fixNothing
 
-typeSigSelector :: Selector
-typeSigSelector md block = map (flip fromSrcSpanInfo block) $ tss md
+typeSigSelector :: Selector ()
+typeSigSelector (md, _) block =
+    map (\ssi -> ((), fromSrcSpanInfo ssi block)) $ tss md
   where
     tss (H.Module _ _ _ _ decls) = [ssi | H.TypeSig ssi _ _ <- decls]
     tss _                        = []
 
-typeSigAlignmentChecker :: Checker
-typeSigAlignmentChecker block = case checkAlignmentHead alignment of
+typeSigAlignmentChecker :: Checker ()
+typeSigAlignmentChecker () block = case checkAlignmentHead alignment of
     Just t  -> [(1, t)]
     Nothing -> []
   where

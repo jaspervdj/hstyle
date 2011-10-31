@@ -1,6 +1,6 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ExistentialQuantification, OverloadedStrings #-}
 module HStyle.Rule
-    ( Rule
+    ( Rule (..)
     , FileState (..)
     , Options (..)
     , runRule
@@ -17,8 +17,9 @@ import HStyle.Selector
 import HStyle.Checker
 import HStyle.Fixer
 
--- | A selector and a check...
-type Rule = (Selector, Checker, Fixer)
+-- | Compose the elements of a rule. Use ExistentialQuantification so the
+-- internal state of a rule cannot be touched from the outside.
+data Rule = forall a. Rule (Selector a) (Checker a) (Fixer a)
 
 data FileState = FileState
     { -- | A block holding the file contents
@@ -45,18 +46,22 @@ data Fix
     | Fixed        -- ^ Fixed, result
     deriving (Eq, Show)
 
-runRule :: Options -> FilePath -> H.Module H.SrcSpanInfo -> FileState -> Rule
+runRule :: Options -> FilePath
+        -> (H.Module H.SrcSpanInfo, [H.Comment])
+        -> FileState -> Rule
         -> IO FileState
-runRule options file md fileState (selector, checker, fixer) =
-    foldM (checkBlock options file checker fixer) fileState $
-        selector md $ fileBlock fileState
+runRule options file mdc fileState (Rule selector checker fixer) =
+    foldM step fileState $ selector mdc $ fileBlock fileState
+  where
+    step fs (x, b) = checkBlock options file checker fixer fs x b
 
-checkBlock :: Options -> FilePath -> Checker -> Fixer -> FileState -> Block
+checkBlock :: Options -> FilePath -> Checker a -> Fixer a -> FileState
+           -> a -> Block
            -> IO FileState
-checkBlock options file checker fixer fs block = do
+checkBlock options file checker fixer fs x block = do
     -- Determine problems, and attempt to fix (lazily)
-    let problems        = checker block
-        (fix, block') = case (optionsFix options, fixer block) of
+    let problems      = checker x block
+        (fix, block') = case (optionsFix options, fixer x block) of
             (False, _)      -> (DontFix, block)
             (True, Nothing) -> (CouldntFix, block)
             (True, Just b)  -> (Fixed, b)

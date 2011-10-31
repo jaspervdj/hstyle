@@ -39,9 +39,9 @@ checkStyle options file = do
         -- Special handling for CPP, haskell-src-exts can't deal with it
         contents' = if H.CPP `elem` exts then unCPP contents else contents
         fs        = FileState block False True
-    case H.parseModuleWithMode mode contents' of
-        H.ParseOk md -> do
-            fs' <- foldM (runRule options file md) fs
+    case H.parseModuleWithComments mode contents' of
+        H.ParseOk x -> do
+            fs' <- foldM (runRule options file x) fs
                 [ typeSigAlignmentRule
                 , tabsRule 4
                 , lineLengthRule 78

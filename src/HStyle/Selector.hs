@@ -10,13 +10,14 @@ import qualified Language.Haskell.Exts.Annotated as H
 import HStyle.Block
 
 -- | Selects a portion from a haskell module
-type Selector = H.Module H.SrcSpanInfo -> Block -> [Block]
+type Selector a =
+    (H.Module H.SrcSpanInfo, [H.Comment]) -> Block -> [(a, Block)]
 
-selectAll :: Selector
-selectAll _ = return
+selectAll :: Selector ()
+selectAll _ block = [((), block)]
 
-selectLines :: Selector
-selectLines _ = perLine
+selectLines :: Selector ()
+selectLines _ block = [((), b) | b <- perLine block]
 
 fromSrcSpanInfo :: H.SrcSpanInfo -> Block -> Block
 fromSrcSpanInfo ssi = subBlock start end

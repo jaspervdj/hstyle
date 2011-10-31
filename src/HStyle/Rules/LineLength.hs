@@ -12,9 +12,9 @@ import HStyle.Rule
 import HStyle.Selector
 
 lineLengthRule :: Int -> Rule
-lineLengthRule max' = (selectLines, lineLengthChecker max', fixNothing)
+lineLengthRule max' = Rule selectLines (lineLengthChecker max') fixNothing
 
-lineLengthChecker :: Int -> Checker
-lineLengthChecker max' = checkLines $ \line -> if T.length line > max'
+lineLengthChecker :: Int -> Checker ()
+lineLengthChecker max' = checkLines $ \() line -> if T.length line > max'
     then Just $ "Exceeds max line length of " `T.append` T.pack (show max')
     else Nothing
