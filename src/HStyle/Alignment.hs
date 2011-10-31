@@ -12,7 +12,7 @@ type Alignment = [[(Int, Text)]]
 checkAlignmentHead :: Alignment
                   -> Maybe Text
 checkAlignmentHead alignment
-    | null alignment'       = Nothing
+    | null alignment'       = Nothing -- Isn't this comment to close?
     | equal (map fst heads) = Nothing
     | otherwise             = Just $ "Improper alignment of " `T.append`
         T.pack (show $ nub $ map snd heads)

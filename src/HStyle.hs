@@ -15,6 +15,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 
 import HStyle.Block
 import HStyle.Rule
+import HStyle.Rules.EolComment
 import HStyle.Rules.LineLength
 import HStyle.Rules.Tabs
 import HStyle.Rules.TrailingWhiteSpace
@@ -46,6 +47,7 @@ checkStyle options file = do
                 , tabsRule 4
                 , lineLengthRule 78
                 , trailingWhiteSpaceRule
+                , eolCommentRule
                 ]
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'
