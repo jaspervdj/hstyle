@@ -3,8 +3,14 @@ module HStyle.Selector
     , selectAll
     , selectLines
     , fromSrcSpanInfo
+    , everything
     ) where
 
+import Data.Maybe (maybeToList)
+
+import Data.Data (Data)
+import Data.Typeable (cast)
+import qualified Data.Generics as G
 import qualified Language.Haskell.Exts.Annotated as H
 
 import HStyle.Block
@@ -25,3 +31,6 @@ fromSrcSpanInfo ssi = subBlock start end
     span' = H.srcInfoSpan ssi
     start = H.srcSpanStartLine span'
     end   = H.srcSpanEndLine span'
+
+everything :: Data d => H.Module H.SrcSpanInfo -> [d]
+everything = G.everything (++) (maybeToList . cast)

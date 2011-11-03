@@ -6,10 +6,6 @@ module HStyle.Rules.AppSpacing
     , appSpacingChecker
     ) where
 
-import Data.Maybe (maybeToList)
-
-import Data.Generics (everything)
-import Data.Typeable (cast)
 import qualified Language.Haskell.Exts.Annotated as H
 
 import HStyle.Checker
@@ -18,7 +14,7 @@ import HStyle.Rule
 import HStyle.Selector
 
 exps :: H.Module H.SrcSpanInfo -> [H.Exp H.SrcSpanInfo]
-exps = everything (++) (maybeToList . cast)
+exps = everything
 
 appSpacingRule :: Rule
 appSpacingRule = Rule appSelector appSpacingChecker fixNothing
