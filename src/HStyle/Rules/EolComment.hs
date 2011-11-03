@@ -6,8 +6,6 @@ module HStyle.Rules.EolComment
 import Control.Monad (guard)
 import Data.Char (isSpace)
 
-import Debug.Trace
-
 import qualified Data.Text as T
 import qualified Language.Haskell.Exts.Annotated as H
 
