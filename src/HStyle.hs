@@ -16,6 +16,7 @@ import qualified Language.Haskell.Exts.Annotated as H
 import HStyle.Block
 import HStyle.Rule
 import HStyle.Rules.AppSpacing
+import HStyle.Rules.CaseAlignment
 import HStyle.Rules.DataAlignment
 import HStyle.Rules.EolComment
 import HStyle.Rules.LineLength
@@ -52,6 +53,7 @@ checkStyle options file = do
                 , eolCommentRule
                 , dataAlignmentRule
                 , appSpacingRule
+                , caseAlignmentRule
                 ]
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'

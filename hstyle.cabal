@@ -30,6 +30,7 @@ Executable hstyle
     HStyle.Fixer
     HStyle.Rule
     HStyle.Rules.AppSpacing
+    HStyle.Rules.CaseAlignment
     HStyle.Rules.DataAlignment
     HStyle.Rules.EolComment
     HStyle.Rules.LineLength

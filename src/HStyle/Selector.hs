@@ -36,11 +36,7 @@ selectLines :: Selector ()
 selectLines _ block = [((), b) | b <- perLine block]
 
 fromSrcSpanInfo :: H.SrcSpanInfo -> Block -> Block
-fromSrcSpanInfo ssi = subBlock start end
-  where
-    span' = H.srcInfoSpan ssi
-    start = H.srcSpanStartLine span'
-    end   = H.srcSpanEndLine span'
+fromSrcSpanInfo ssi = snippetBlock . fromSrcSpanInfoSnippet ssi
 
 fromSrcSpanInfoSnippet :: H.SrcSpanInfo -> Block -> Snippet
 fromSrcSpanInfoSnippet ssi block = Snippet

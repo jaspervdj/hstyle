@@ -53,9 +53,14 @@ toLines = V.toList . blockLines
 -- | Subblock from start to end -- including both.
 subBlock :: Int -> Int -> Block -> Block
 subBlock start end block = Block
-    { blockOffset = blockOffset block + start - 1
-    , blockLines  = V.slice (start - 1) (end - start + 1) $ blockLines block
+    { blockOffset = blockOffset block + start'
+    , blockLines  = V.slice start' (end' - start') lines'
     }
+  where
+    -- Bounds checking
+    lines' = blockLines block
+    start' = start - 1
+    end'   = min (V.length lines') end
 
 -- | Update a subblock
 updateSubBlock :: Block  -- ^ Old

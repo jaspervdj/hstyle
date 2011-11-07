@@ -35,6 +35,6 @@ alignmentOf xs = map $ alignmentOf' 0
         | T.null t  = []
         | otherwise = case find (`T.isPrefixOf` t) xs of
             Nothing -> alignmentOf' (i+1) (T.drop 1 t)
-            Just x  ->
+            Just x ->
                 let len = T.length x
                 in (i, x) : alignmentOf' (i + len) (T.drop len t)
