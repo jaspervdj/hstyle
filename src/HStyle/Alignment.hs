@@ -14,7 +14,7 @@ checkAlignmentHead :: Alignment
 checkAlignmentHead alignment
     | null alignment'       = Nothing -- Isn't this comment to close?
     | equal (map fst heads) = Nothing
-    | otherwise             = Just $ "Improper alignment of " `T.append`
+    | otherwise             = Just $ "Improper alignment of "`T.append`
         T.pack (show $ nub $ map snd heads)
   where
     alignment' = filter (not . null) alignment
@@ -34,7 +34,7 @@ alignmentOf xs = map $ alignmentOf' 0
     alignmentOf' i t
         | T.null t  = []
         | otherwise = case find (`T.isPrefixOf` t) xs of
-            Nothing -> alignmentOf' (i + 1) (T.drop 1 t)
+            Nothing -> alignmentOf' (i+1) (T.drop 1 t)
             Just x  ->
                 let len = T.length x
                 in (i, x) : alignmentOf' (i + len) (T.drop len t)

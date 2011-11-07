@@ -51,6 +51,7 @@ checkStyle options file = do
                 , trailingWhiteSpaceRule
                 , eolCommentRule
                 , dataAlignmentRule
+                , appSpacingRule
                 ]
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'
