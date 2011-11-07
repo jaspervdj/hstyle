@@ -68,7 +68,7 @@ checkBlock options file checker fixer fs x block = do
 
     -- Output our results for this check
     forM_ problems $ \(i, problem) -> do
-        let line = absoluteLineNumber i (fileBlock fs)
+        let line = absoluteLineNumber i block
         T.putStrLn $ T.pack file `T.append` ":" `T.append`
             T.pack (show line) `T.append` ": " `T.append` problem
         unless (optionsQuiet options) $ do
