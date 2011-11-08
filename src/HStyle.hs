@@ -39,7 +39,8 @@ checkStyle options file = do
         -- Determine the extensions used in the file, and update the parsing
         -- mode based upon those
         exts      = fromMaybe [] $ H.readExtensions contents
-        mode      = H.defaultParseMode {H.extensions = exts}
+        mode      = H.defaultParseMode
+            {H.extensions = exts, H.fixities = Nothing}
         -- Special handling for CPP, haskell-src-exts can't deal with it
         contents' = if H.CPP `elem` exts then unCPP contents else contents
         fs        = FileState block False True
