@@ -1,5 +1,5 @@
 Name:           hstyle
-Version:        0.2.0.2
+Version:        0.2.0.3
 Synopsis:       Checks Haskell source code for style compliance.
 Description:    Originally intended to automate style checking for the Snap
                 project.  But the project should be general enough to work
