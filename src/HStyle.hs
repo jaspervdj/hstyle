@@ -20,6 +20,7 @@ import HStyle.Rules.CaseAlignment
 import HStyle.Rules.DataAlignment
 import HStyle.Rules.EolComment
 import HStyle.Rules.LineLength
+import HStyle.Rules.PatMatchAlignment
 import HStyle.Rules.Tabs
 import HStyle.Rules.TrailingWhiteSpace
 import HStyle.Rules.TypeSigAlignment
@@ -55,6 +56,7 @@ checkStyle options file = do
                 , dataAlignmentRule
                 , appSpacingRule
                 , caseAlignmentRule
+                , patMatchAlignmentRule
                 ]
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'
