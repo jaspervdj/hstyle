@@ -7,7 +7,9 @@ module Main
     ) where
 
 import Control.Applicative ((<$>))
+import System.Directory (doesDirectoryExist, getDirectoryContents)
 import System.Exit (ExitCode (..), exitWith)
+import System.FilePath (takeExtension, (</>))
 
 import System.Console.CmdArgs
 
@@ -35,10 +37,31 @@ toOptions hs = Options
     , optionsQuiet = quiet hs
     }
 
+-- | Recursively list the contents of a directory. Only returns regular files.
+getFiles :: FilePath -> IO [FilePath]
+getFiles path = do
+    isDir <- doesDirectoryExist path
+    if not isDir
+        then return [path]
+        else do
+            contents <- filter proper <$> getDirectoryContents path
+            concat <$> mapM (getFiles . (path </>)) contents
+  where
+    proper = not . (`elem` [".", ".."])
+
+-- | Is a file haskell?
+isCheckable :: FilePath -> Bool
+isCheckable fp = case takeExtension fp of
+    ".hs"  -> True
+    ".lhs" -> True
+    _      -> False
+
 -- | Simple main that takes one command-line parameter of "check" or "fix" and
 -- a list of files to be checked.
 main :: IO ()
 main = do
     config <- cmdArgs hstyle
-    ok <- all fileOk <$> mapM (checkStyle $ toOptions config) (files config)
+    -- Expand all files
+    files' <- filter isCheckable . concat <$> mapM getFiles (files config)
+    ok <- all fileOk <$> mapM (checkStyle $ toOptions config) files'
     exitWith $ if ok then ExitSuccess else ExitFailure 1
