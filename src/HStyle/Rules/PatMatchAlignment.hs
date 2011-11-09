@@ -42,8 +42,8 @@ patMatchSelector (md, _) block =
             H.InfixMatch _ _ name _ rhs _ -> return (name, rhs)
         , -- Select positions from the RHS
           loc <- case rhs of
-            H.UnGuardedRhs l _   -> return l
-            H.GuardedRhss _ rhss -> map H.ann rhss
+            H.UnGuardedRhs _ e   -> return $ H.ann e
+            H.GuardedRhss _ rhss -> [H.ann e | H.GuardedRhs _ _ e <- rhss]
         ]
 
 patMatchAlignmentChecker :: Checker [Snippet]
