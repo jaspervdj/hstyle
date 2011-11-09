@@ -2,6 +2,7 @@
 module HStyle
     ( FileState (..)
     , Options (..)
+    , parseModule
     , checkStyle
     ) where
 
@@ -9,6 +10,7 @@ import Control.Monad (foldM, when)
 import Data.List (isPrefixOf)
 import Data.Maybe (fromMaybe)
 
+import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Language.Haskell.Exts.Annotated as H
@@ -33,21 +35,33 @@ unCPP = unlines . map unCpp' . lines
         | "#" `isPrefixOf` x = ""
         | otherwise          = x
 
-checkStyle :: Options -> FilePath -> IO FileState
-checkStyle options file = do
-    contents <- readFile file
-    let block     = fromText $ T.pack contents
+-- | Abstraction over HSE's parsing
+parseModule :: Maybe FilePath
+            -> Text
+            -> Either String (H.Module H.SrcSpanInfo, [H.Comment], Block)
+parseModule mfp text =
+    let fp       = fromMaybe "<unknown>" mfp
+        string   = T.unpack text
+        block    = fromText text
         -- Determine the extensions used in the file, and update the parsing
         -- mode based upon those
-        exts      = fromMaybe [] $ H.readExtensions contents
-        mode      = H.defaultParseMode
+        exts     = fromMaybe [] $ H.readExtensions string
+        mode     = H.defaultParseMode
             {H.extensions = exts, H.fixities = Nothing}
         -- Special handling for CPP, haskell-src-exts can't deal with it
-        contents' = if H.CPP `elem` exts then unCPP contents else contents
-        fs        = FileState block False True
-    case H.parseModuleWithComments mode contents' of
-        H.ParseOk x -> do
-            fs' <- foldM (runRule options file x) fs
+        string'  = if H.CPP `elem` exts then unCPP string else string
+    in case H.parseModuleWithComments mode string' of
+        H.ParseOk (md, cm) -> Right (md, cm, block)
+        err                -> Left $ "HStyle.parseModule: could not parse " ++
+            fp ++ ": " ++ show err
+
+checkStyle :: Options -> FilePath -> IO FileState
+checkStyle options file = do
+    text <- T.readFile file
+    case parseModule (Just file) text of
+        Left err              -> error err
+        Right (md, cm, block) -> do
+            fs' <- foldM (runRule options file (md, cm)) (newFileState block)
                 [ typeSigAlignmentRule
                 , tabsRule 4
                 , lineLengthRule 78
@@ -60,7 +74,5 @@ checkStyle options file = do
                 ]
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'
-        err         -> do
-            putStrLn $ "HStyle.checkStyle: could not parse " ++
-                file ++ ": " ++ show err
-            return fs
+  where
+    newFileState block = FileState block False True
