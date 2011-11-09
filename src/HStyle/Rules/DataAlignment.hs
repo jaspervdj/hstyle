@@ -18,8 +18,8 @@ dataAlignmentRule :: Rule
 dataAlignmentRule = Rule dataSelector dataAlignmentChecker fixNothing
 
 dataSelector :: Selector ()
-dataSelector (md, _) block =
-    map (\ssi -> ((), fromSrcSpanInfo ssi block)) $ datas =<< everything md
+dataSelector (md, _) _ =
+    map (\ssi -> ((), rangeFromScrSpanInfo ssi)) $ datas =<< everything md
   where
     datas :: H.Decl H.SrcSpanInfo -> [H.SrcSpanInfo]
     datas decl = case decl of
@@ -27,8 +27,8 @@ dataSelector (md, _) block =
         _                          -> []
 
 dataAlignmentChecker :: Checker ()
-dataAlignmentChecker () block = case checkAlignmentHead alignment of
+dataAlignmentChecker () range block = case checkAlignmentHead alignment of
     Just t  -> [(1, t)]
     Nothing -> []
   where
-    alignment = alignmentOf ["{", ",", "}"] $ toLines block
+    alignment = alignmentOf ["{", ",", "}"] $ getRange range block

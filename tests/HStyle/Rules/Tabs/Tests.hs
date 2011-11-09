@@ -19,13 +19,12 @@ tests = testGroup "HStyle.Rules.Tabs.Tests"
 
 tabsFixer_01 :: Assertion
 tabsFixer_01 =
-    tabsFixer 4 () (fromText "Hello world") @?= Just (fromText "Hello world")
+    tabsFixer 4 () (fromText "Hello world") (1, 1) @?= Just ["Hello world"]
 
 tabsFixer_02 :: Assertion
 tabsFixer_02 =
-    tabsFixer 4 () (fromText "\t\t") @?= Just (fromText "        ")
+    tabsFixer 4 () (fromText "\t\t") (1, 1) @?= Just ["        "]
 
 tabsFixer_03 :: Assertion
-tabsFixer_03 =
-    tabsFixer 4 () (fromText "\tif foo\tfi") @?=
-        Just (fromText "    if foo    fi")
+tabsFixer_03 = tabsFixer 4 () (fromText "\tif foo\tfi") (1, 1) @?=
+    Just ["    if foo    fi"]

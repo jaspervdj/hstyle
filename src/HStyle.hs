@@ -62,15 +62,15 @@ checkStyle options file = do
         Left err              -> error err
         Right (md, cm, block) -> do
             fs' <- foldM (runRule options file (md, cm)) (newFileState block)
-                [ typeSigAlignmentRule
-                , tabsRule 4
-                , lineLengthRule 78
-                , trailingWhiteSpaceRule
-                , eolCommentRule
-                , dataAlignmentRule
-                , appSpacingRule
+                [ appSpacingRule
                 , caseAlignmentRule
+                , dataAlignmentRule
+                , eolCommentRule
+                , lineLengthRule 78
                 , patMatchAlignmentRule
+                , tabsRule 4
+                , trailingWhiteSpaceRule
+                , typeSigAlignmentRule
                 ]
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'

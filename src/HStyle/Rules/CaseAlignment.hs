@@ -8,6 +8,7 @@ module HStyle.Rules.CaseAlignment
 import qualified Language.Haskell.Exts.Annotated as H
 
 import HStyle.Alignment
+import HStyle.Block
 import HStyle.Checker
 import HStyle.Fixer
 import HStyle.Rule
@@ -16,8 +17,8 @@ import HStyle.Selector
 caseAlignmentRule :: Rule
 caseAlignmentRule = Rule caseSelector caseAlignmentChecker fixNothing
 
-caseSelector :: Selector [Snippet]
-caseSelector (md, _) block = do
+caseSelector :: Selector [Position]
+caseSelector (md, _) _ = do
     -- Select a case statement
     (l, alts) <- [(l, alts) | H.Case l _ alts <- exps]
 
@@ -29,16 +30,14 @@ caseSelector (md, _) block = do
                         H.GuardedAlts _ ga' -> map H.ann ga'
              ]
 
-    return (map snippet ls, fromSrcSpanInfo l block)
+    return (map positionFromScrSpanInfo ls, rangeFromScrSpanInfo l)
   where
     exps :: [H.Exp H.SrcSpanInfo]
     exps = everything md
-    snippet :: H.SrcSpanInfo -> Snippet
-    snippet = flip fromSrcSpanInfoSnippet block
 
-caseAlignmentChecker :: Checker [Snippet]
-caseAlignmentChecker snippets _ = case checkAlignmentHead alignment of
+caseAlignmentChecker :: Checker [Position]
+caseAlignmentChecker positions _ _ = case checkAlignmentHead alignment of
     Nothing -> []
     Just t  -> [(1, t)]
   where
-    alignment = [[(c, "->")] | Snippet _ _ c <- snippets]
+    alignment = [[(c, "->")] | (_, c) <- positions]

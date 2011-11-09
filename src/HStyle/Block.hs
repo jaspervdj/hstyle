@@ -2,15 +2,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 module HStyle.Block
     ( Block
+    , Range
+    , Position
     , fromText
     , toText
-    , prettyBlock
+    , prettyRange
     , toLines
-    , subBlock
-    , updateSubBlock
-    , perLine
-    , absoluteLineNumber
-    , mapLines
+    , numLines
+    , getRange
+    , updateRange
+    , getCharacter
     ) where
 
 import Data.Text (Text)
@@ -18,28 +19,28 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Text as T
 
-data Block = Block
-    { blockOffset :: Int
-    , blockLines  :: Vector Text
+newtype Block = Block
+    { unBlock :: Vector Text
     } deriving (Eq, Show)
 
+-- | Used to select a number of lines. (start, end), both included.
+type Range = (Int, Int)
+
+-- | A position in the file. (row, column).
+type Position = (Int, Int)
+
 fromText :: Text -> Block
-fromText text = Block
-    { blockOffset = 0
-    , blockLines  = V.fromList $ T.lines text
-    }
+fromText = Block .  V.fromList . T.lines
 
 toText :: Block -> Text
 toText = T.unlines . toLines
 
-prettyBlock :: Int -> Block -> Text
-prettyBlock indent block = T.unlines $
+prettyRange :: Int -> Block -> Range -> Text
+prettyRange indent block range@(start, end) = T.unlines $
     map ((T.replicate indent " " `T.append`) . pretty) $
-    zip [offset + 1 ..] $ V.toList lines'
+    zip [start ..] $ getRange block range
   where
-    offset = blockOffset block
-    lines' = blockLines block
-    width  = length $ show (offset + V.length lines')
+    width  = length $ show end
 
     pretty (ln, t) =
         let ln' = T.pack (show ln)
@@ -48,52 +49,36 @@ prettyBlock indent block = T.unlines $
             ln' `T.append` " " `T.append` t
 
 toLines :: Block -> [Text]
-toLines = V.toList . blockLines
+toLines = V.toList . unBlock
 
--- | Subblock from start to end -- including both.
-subBlock :: Int -> Int -> Block -> Block
-subBlock start end block = Block
-    { blockOffset = blockOffset block + start'
-    , blockLines  = V.slice start' (end' - start') lines'
-    }
+numLines :: Block -> Int
+numLines = V.length . unBlock
+
+getRange :: Block -> Range -> [Text]
+getRange (Block lines') (start, end) = V.toList $
+    V.slice start' (end' - start') lines'
   where
     -- Bounds checking
-    lines' = blockLines block
     start' = start - 1
     end'   = min (V.length lines') end
 
 -- | Update a subblock
-updateSubBlock :: Block  -- ^ Old
-               -> Block  -- ^ New
-               -> Block  -- ^ Block to update
-               -> Block  -- ^ Resulting block
-updateSubBlock old new block
-    | blockOffset old /= blockOffset new =
-        error "HStyle.Block.updateSubBlock: Internal error"
-    | otherwise                          = block
-        { blockLines = V.take subOffset lines' V.++ blockLines new V.++
-            V.drop (subOffset + V.length oldLines) lines'
-        }
+updateRange :: Range   -- ^ Range to replace
+            -> [Text]  -- ^ New content
+            -> Block   -- ^ Block to update
+            -> Block   -- ^ Resulting block
+updateRange (start, end) new (Block lines') = Block $
+    V.take (start - 1) lines' V.++
+        V.fromList new V.++
+        V.drop end lines'
+
+-- | Get a character at a certain position
+getCharacter :: Position -> Block -> Maybe Char
+getCharacter (row, col) (Block lines')
+    | row < 1               = Nothing
+    | row > V.length lines' = Nothing
+    | col < 1               = Nothing
+    | col > T.length line   = Nothing
+    | otherwise             = Just $ line `T.index` (col - 1)
   where
-    subOffset
-        | blockOffset old == blockOffset new = blockOffset old
-        | otherwise                          = error
-            "HStyle.Block.updateSubBlock: Internal error"
-    oldLines = blockLines old
-    lines'   = blockLines block
-
--- | Create a new block for every line.
-perLine :: Block -> [Block]
-perLine (Block offset lines')  = map line $
-    zip [offset + 0 ..] $ V.toList lines'
-  where
-    line (i, t) = Block i $ V.singleton t
-
--- | Convert relative line number (within this block, 1-based) to an absolute
--- line number
-absoluteLineNumber :: Int -> Block -> Int
-absoluteLineNumber i = (+ i) . blockOffset
-
--- | Map over the lines in a block
-mapLines :: (Text -> Text) -> Block -> Block
-mapLines f block = block {blockLines = V.map f (blockLines block)}
+    line = lines' V.! (row - 1)

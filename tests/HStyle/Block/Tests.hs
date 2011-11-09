@@ -12,24 +12,23 @@ import HStyle.Block
 
 tests :: Test
 tests = testGroup "HStyle.Block.Tests"
-    [ testCase "subBlock_01"       subBlock_01
-    , testCase "updateSubBlock_01" updateSubBlock_01
+    [ testCase "subRange_01"    subRange_01
+    , testCase "updateRange_01" updateRange_01
     ]
 
-subBlock_01 :: Assertion
-subBlock_01 = toLines (subBlock 2 3 poem) @?=
+subRange_01 :: Assertion
+subRange_01 = getRange poem (2, 3) @?=
     ["A little man who wasn't there", "He wasn't there again today"]
 
-updateSubBlock_01 :: Assertion
-updateSubBlock_01 = toLines (updateSubBlock old new poem) @?=
+updateRange_01 :: Assertion
+updateRange_01 = toLines (updateRange (2, 3) new poem) @?=
     [ "Last night I saw upon the stair"
     , "A little man who wasn't there..."
     , "He wasn't there again today..."
     , "Oh, how I wish he'd go away"
     ]
   where
-    old = subBlock 2 3 poem
-    new = mapLines (`T.append` "...") old
+    new = map (`T.append` "...") $ getRange poem (2, 3)
 
 poem :: Block
 poem = fromText

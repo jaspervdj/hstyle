@@ -18,15 +18,15 @@ typeSigAlignmentRule :: Rule
 typeSigAlignmentRule = Rule typeSigSelector typeSigAlignmentChecker fixNothing
 
 typeSigSelector :: Selector ()
-typeSigSelector (md, _) block =
-    map (\ssi -> ((), fromSrcSpanInfo ssi block)) $ tss md
+typeSigSelector (md, _) _ =
+    map (\ssi -> ((), rangeFromScrSpanInfo ssi)) $ tss md
   where
     tss (H.Module _ _ _ _ decls) = [ssi | H.TypeSig ssi _ _ <- decls]
     tss _                        = []
 
 typeSigAlignmentChecker :: Checker ()
-typeSigAlignmentChecker () block = case checkAlignmentHead alignment of
-    Just t  -> [(1, t)]
+typeSigAlignmentChecker () block range = case checkAlignmentHead alignment of
+    Just t  -> [(fst range, t)]
     Nothing -> []
   where
-    alignment = alignmentOf ["::", "=>", "->"] $ toLines block
+    alignment = alignmentOf ["::", "=>", "->"] $ getRange block range

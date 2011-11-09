@@ -56,35 +56,36 @@ runRule options file mdc fileState (Rule selector checker fixer) =
     step fs (x, b) = checkBlock options file checker fixer fs x b
 
 checkBlock :: Options -> FilePath -> Checker a -> Fixer a -> FileState
-           -> a -> Block
+           -> a -> Range
            -> IO FileState
-checkBlock options file checker fixer fs x block = do
+checkBlock options file checker fixer fs x range = do
     -- Determine problems, and attempt to fix (lazily)
-    let problems      = checker x block
-        (fix, block') = case (optionsFix options, fixer x block) of
+    let block         = fileBlock fs
+        problems      = checker x block range
+        (fix, block') = case (optionsFix options, fixer x block range) of
             (False, _)      -> (DontFix, block)
             (True, Nothing) -> (CouldntFix, block)
-            (True, Just b)  -> (Fixed, b)
+            (True, Just ls) -> (Fixed, updateRange range ls block)
 
     -- Output our results for this check
-    forM_ problems $ \(i, problem) -> do
-        let line = absoluteLineNumber i block
+    forM_ problems $ \(line, problem) -> do
+        -- let line = absoluteLineNumber i block
         T.putStrLn $ T.pack file `T.append` ":" `T.append`
             T.pack (show line) `T.append` ": " `T.append` problem
         unless (optionsQuiet options) $ do
             T.putStrLn "    Found:"
-            T.putStr   $ prettyBlock 4 block
+            T.putStr $ prettyRange 4 block range
             case fix of
                 DontFix    -> return ()
                 CouldntFix -> T.putStrLn "    (Couldn't automatically fix)"
-                Fixed      -> do
-                    T.putStrLn "    Fixed to:"
-                    T.putStr $ prettyBlock 4 block'
+                Fixed      -> T.putStrLn "    (Fixed)"
             T.putStrLn ""
 
     -- Return updated file state
     return fs
-        { fileBlock   = updateSubBlock block block' (fileBlock fs)
+        { -- TODO: The problem is, that, when we update the code, we have to
+          -- reparse the module, otherwise there's inconsistencies.
+          fileBlock   = const block block'
         , fileUpdated = fileUpdated fs || fix == Fixed
         , fileOk      = fileOk fs      && null problems
         }

@@ -22,37 +22,37 @@ exps = everything
 
 data AppInfo
     -- | Application of the form @x + y@
-    = Infix Snippet Snippet Snippet
+    = Infix String Position Position Position
     -- | Application of the form @f x@
-    | Prefix Snippet Snippet
+    | Prefix String Position Position
     deriving (Show)
 
 appSpacingRule :: Rule
 appSpacingRule = Rule appSelector appSpacingChecker fixNothing
 
 appSelector :: Selector AppInfo
-appSelector (md, _) block =
-    [ (Infix (ts e1) (ts o) (ts e2), fromSrcSpanInfo l block)
+appSelector (md, _) _ =
+    [ (Infix (H.prettyPrint o) (ts e1) (ts o) (ts e2), rangeFromScrSpanInfo l)
     | H.InfixApp l e1 o e2 <- exps md
     ] ++
-    [ (Prefix (ts f) (ts x), fromSrcSpanInfo l block)
+    [ (Prefix (H.prettyPrint f) (ts f) (ts x), rangeFromScrSpanInfo l)
     | H.App l f x <- exps md
     ]
   where
-    ts :: H.Annotated f => f H.SrcSpanInfo -> Snippet
-    ts = flip fromSrcSpanInfoSnippet block . H.ann
+    ts :: H.Annotated f => f H.SrcSpanInfo -> Position
+    ts = positionFromScrSpanInfo . H.ann
 
 appSpacingChecker :: Checker AppInfo
-appSpacingChecker app _ = case app of
-    (Infix _ so se2)
+appSpacingChecker app block _ = case app of
+    (Infix p _ so se2)
         | spaceBefore so && spaceBefore se2 -> []
         | otherwise                         ->
-            [(1, "Need spacing around " `T.append` snippetText so)]
-    (Prefix _ x)
+            [(1, "Need spacing around " `T.append` T.pack p)]
+    (Prefix p _ x)
         | spaceBefore x -> []
         | otherwise     ->
-            [(1, "Need spacing before " `T.append` snippetText x)]
+            [(1, "Need spacing before " `T.append` T.pack p)]
   where
-    spaceBefore (Snippet b _ c)
-        | c < 1     = True
-        | otherwise = isSpace $ T.index (toText b) (c - 2)
+    spaceBefore (line, col) = case getCharacter (line, col - 1) block of
+        Nothing -> True
+        Just c  -> isSpace c

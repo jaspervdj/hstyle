@@ -12,9 +12,10 @@ import HStyle.Rule
 
 -- | Check a module and list the errors
 testRule :: Rule -> Text -> [(Int, Text)]
-testRule (Rule selector checker _) text =
+testRule (Rule selector checker _) text = do
     let Right (md, cm, block) = parseModule Nothing text
-    in selector (md, cm) block >>= uncurry checker
+    (x, range) <- selector (md, cm) block
+    checker x block range
 
 -- | Test if a rule accepts a certain module without problems
 testRuleAccept :: Rule -> Text -> Assertion

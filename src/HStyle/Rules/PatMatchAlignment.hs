@@ -9,6 +9,7 @@ import qualified Data.Map as M
 import qualified Language.Haskell.Exts.Annotated as H
 
 import HStyle.Alignment
+import HStyle.Block
 import HStyle.Checker
 import HStyle.Fixer
 import HStyle.Rule
@@ -18,10 +19,10 @@ patMatchAlignmentRule :: Rule
 patMatchAlignmentRule =
     Rule patMatchSelector patMatchAlignmentChecker fixNothing
 
-patMatchSelector :: Selector [Snippet]
+patMatchSelector :: Selector [Position]
 patMatchSelector (md, _) block =
     -- TODO: fetch block?
-    [ (map (flip fromSrcSpanInfoSnippet block) bds, block)
+    [ (map positionFromScrSpanInfo bds, (1, numLines block))
     | (_, bds) <- M.toList bindings
     ]
   where
@@ -46,9 +47,9 @@ patMatchSelector (md, _) block =
             H.GuardedRhss _ rhss -> [H.ann e | H.GuardedRhs _ _ e <- rhss]
         ]
 
-patMatchAlignmentChecker :: Checker [Snippet]
-patMatchAlignmentChecker snippets _ = case checkAlignmentHead alignment of
+patMatchAlignmentChecker :: Checker [Position]
+patMatchAlignmentChecker positions _ _ = case checkAlignmentHead alignment of
     Nothing -> []
     Just t  -> [(1, t)]
   where
-    alignment = [[(c, "=")] | Snippet _ _ c <- snippets]
+    alignment = [[(c, "=")] | (_, c) <- positions]
