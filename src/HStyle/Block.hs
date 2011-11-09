@@ -12,6 +12,7 @@ module HStyle.Block
     , getRange
     , updateRange
     , getCharacter
+    , findBackwards
     ) where
 
 import Data.Text (Text)
@@ -82,3 +83,18 @@ getCharacter (row, col) (Block lines')
     | otherwise             = Just $ line `T.index` (col - 1)
   where
     line = lines' V.! (row - 1)
+
+-- | Find a string in a range, starting from a certain position, going
+-- backwards. The string to search for should not contain any newlines.
+findBackwards :: Range -> Position -> Text -> Block -> Maybe Position
+findBackwards (start, _) pos text (Block lines') = uncurry findBackwards' pos
+  where
+    findBackwards' row col
+        | row < start = Nothing
+        | otherwise   = case T.breakOnEnd text ln' of
+            ("", _) -> findBackwards' (row - 1) 0  -- 0 is not used anymore
+            (xs, _) -> Just $ (row, T.length xs - T.length text + 1)
+      where
+        ln                   = lines' V.! (row - 1)
+        ln' | fst pos == row = T.take (col + T.length text - 1) ln
+            | otherwise      = ln
