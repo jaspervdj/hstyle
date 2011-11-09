@@ -14,6 +14,7 @@ tests :: Test
 tests = testGroup "HStyle.Rules.Tabs.Tests"
     [ testCase "patMatchAlignment_01" patMatchAlignment_01
     , testCase "patMatchAlignment_02" patMatchAlignment_02
+    , testCase "patMatchAlignment_03" patMatchAlignment_03
     ]
 
 patMatchAlignment_01 :: Assertion
@@ -24,8 +25,16 @@ patMatchAlignment_01 = testRuleAccept patMatchAlignmentRule
 
 patMatchAlignment_02 :: Assertion
 patMatchAlignment_02 = testRuleAccept patMatchAlignmentRule
-    "fun 0          =  1\n\
+    "fun 0           = 1\n\
     \fun n\n\
     \    | n > 2     = 8\n\
     \    | otherwise = 10\n\
+    \"
+
+patMatchAlignment_03 :: Assertion
+patMatchAlignment_03 = testRuleReject patMatchAlignmentRule
+    "fun 0           =  1\n\
+    \fun n\n\
+    \    | n > 2      = 8\n\
+    \    | otherwise =  10\n\
     \"

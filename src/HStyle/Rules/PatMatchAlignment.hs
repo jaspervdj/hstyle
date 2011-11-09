@@ -5,6 +5,7 @@ module HStyle.Rules.PatMatchAlignment
 
 import Control.Arrow ((***))
 
+import Data.Maybe (maybeToList)
 import qualified Data.Map as M
 import qualified Language.Haskell.Exts.Annotated as H
 
@@ -48,8 +49,16 @@ patMatchSelector (md, _) block =
         ]
 
 patMatchAlignmentChecker :: Checker [Position]
-patMatchAlignmentChecker positions _ _ = case checkAlignmentHead alignment of
-    Nothing -> []
-    Just t  -> [(1, t)]
+patMatchAlignmentChecker positions block range =
+    case checkAlignmentHead alignment of
+        Nothing -> []
+        Just t  -> [(1, t)]
   where
-    alignment = [[(c, "=")] | (_, c) <- positions]
+    alignment =
+        [ [(c, "=")]
+        | pos <- positions
+        -- We get the power of the /expression/, but we actually want the "="
+        -- signs to be aligned, so we have to search backwards, starting from
+        -- the expression.
+        , (_, c) <- maybeToList $ findBackwards range pos "=" block
+        ]
