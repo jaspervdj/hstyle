@@ -25,7 +25,7 @@ equal :: Eq a
       -> Bool
 equal (x : y : r)
     | x == y    = equal (y : r)
-    | otherwise = False
+    | otherwise  = False
 equal _         = True
 
 alignmentOf :: [Text] -> Lines -> Alignment

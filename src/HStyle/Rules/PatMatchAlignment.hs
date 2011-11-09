@@ -3,7 +3,7 @@ module HStyle.Rules.PatMatchAlignment
     ( patMatchAlignmentRule
     ) where
 
-import Control.Arrow ((***))
+import Control.Arrow ((&&&), (***))
 
 import Data.Maybe (maybeToList)
 import qualified Data.Map as M
@@ -21,11 +21,11 @@ patMatchAlignmentRule =
     Rule patMatchSelector patMatchAlignmentChecker fixNothing
 
 patMatchSelector :: Selector [Position]
-patMatchSelector (md, _) block =
-    -- TODO: fetch block?
-    [ (map positionFromScrSpanInfo bds, (1, numLines block))
-    | (_, bds) <- M.toList bindings
-    ]
+patMatchSelector (md, _) _ = do
+    (_, bds) <- M.toList bindings
+    let positions = map positionFromScrSpanInfo bds
+        range     = minimum &&& maximum $ map fst positions
+    return (positions, range)
   where
     bindings :: M.Map (H.Name ()) [H.SrcSpanInfo]
     bindings = M.fromListWith (++) $ map (fmap (const ()) *** return)
@@ -52,7 +52,7 @@ patMatchAlignmentChecker :: Checker [Position]
 patMatchAlignmentChecker positions block range =
     case checkAlignmentHead alignment of
         Nothing -> []
-        Just t  -> [(1, t)]
+        Just t  -> [(fst range, t)]
   where
     alignment =
         [ [(c, "=")]
