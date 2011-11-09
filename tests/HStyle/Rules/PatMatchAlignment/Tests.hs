@@ -11,7 +11,7 @@ import HStyle.Rules.PatMatchAlignment
 import HStyle.Tests.Util
 
 tests :: Test
-tests = testGroup "HStyle.Rules.Tabs.Tests"
+tests = testGroup "HStyle.Rules.PatMatchAlignment.Tests"
     [ testCase "patMatchAlignment_01" patMatchAlignment_01
     , testCase "patMatchAlignment_02" patMatchAlignment_02
     , testCase "patMatchAlignment_03" patMatchAlignment_03
