@@ -5,7 +5,6 @@ module HStyle.Rules.PatMatchAlignment
 
 import Control.Arrow ((&&&), (***))
 
-import Data.Maybe (maybeToList)
 import qualified Data.Map as M
 import qualified Language.Haskell.Exts.Annotated as H
 
@@ -50,15 +49,6 @@ patMatchSelector (md, _) _ = do
 
 patMatchAlignmentChecker :: Checker [Position]
 patMatchAlignmentChecker positions block range =
-    case checkAlignmentHead alignment of
-        Nothing -> []
-        Just t  -> [(fst range, t)]
-  where
-    alignment =
-        [ [(c, "=")]
-        | pos <- positions
-        -- We get the power of the /expression/, but we actually want the "="
-        -- signs to be aligned, so we have to search backwards, starting from
-        -- the expression.
-        , (_, c) <- maybeToList $ findBackwards range pos "=" block
-        ]
+    if checkAlignmentHead' (backwardAlignment range positions ["="] block)
+        then []
+        else [(fst range, "Improper alignment of =")]
