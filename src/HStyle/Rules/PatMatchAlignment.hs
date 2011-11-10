@@ -49,6 +49,6 @@ patMatchSelector (md, _) _ = do
 
 patMatchAlignmentChecker :: Checker [Position]
 patMatchAlignmentChecker positions block range =
-    if checkAlignmentHead' (backwardAlignment range positions ["="] block)
+    if checkAlignmentHead (backwardAlignment range positions ["="] block)
         then []
         else [(fst range, "Improper alignment of =")]

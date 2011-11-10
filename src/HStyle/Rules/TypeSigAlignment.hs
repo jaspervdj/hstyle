@@ -17,16 +17,20 @@ import HStyle.Selector
 typeSigAlignmentRule :: Rule
 typeSigAlignmentRule = Rule typeSigSelector typeSigAlignmentChecker fixNothing
 
-typeSigSelector :: Selector ()
+typeSigSelector :: Selector [Position]
 typeSigSelector (md, _) _ =
-    map (\ssi -> ((), rangeFromScrSpanInfo ssi)) $ tss md
+    [ (map (positionFromScrSpanInfo . H.ann) types, rangeFromScrSpanInfo loc)
+    | H.Module _ _ _ _ decls <- [md]
+    , H.TypeSig loc _ typ    <- decls
+    , let types = defunty typ
+    ]
   where
-    tss (H.Module _ _ _ _ decls) = [ssi | H.TypeSig ssi _ _ <- decls]
-    tss _                        = []
+    defunty (H.TyForall _ _ _ t) = defunty t
+    defunty (H.TyFun _ t ts)     = t : defunty ts
+    defunty t                    = [t]
 
-typeSigAlignmentChecker :: Checker ()
-typeSigAlignmentChecker () block range = case checkAlignmentHead alignment of
-    Just t  -> [(fst range, t)]
-    Nothing -> []
-  where
-    alignment = alignmentOf ["::", "=>", "->"] $ getRange block range
+typeSigAlignmentChecker :: Checker [Position]
+typeSigAlignmentChecker pos block range =
+    if checkAlignmentHead (backwardAlignment range pos ["::", "=>", "->"] block)
+        then []
+        else [(fst range, "Improper alignment of =")]

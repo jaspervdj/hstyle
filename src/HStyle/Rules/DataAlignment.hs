@@ -17,18 +17,14 @@ import HStyle.Selector
 dataAlignmentRule :: Rule
 dataAlignmentRule = Rule dataSelector dataAlignmentChecker fixNothing
 
-dataSelector :: Selector ()
+dataSelector :: Selector [Position]
 dataSelector (md, _) _ =
-    map (\ssi -> ((), rangeFromScrSpanInfo ssi)) $ datas =<< everything md
-  where
-    datas :: H.Decl H.SrcSpanInfo -> [H.SrcSpanInfo]
-    datas decl = case decl of
-        d@(H.DataDecl _ _ _ _ _ _) -> [H.ann d]
-        _                          -> []
+    [ (map (positionFromScrSpanInfo . H.ann) constrs, rangeFromScrSpanInfo loc)
+    | H.DataDecl loc _ _ _ constrs _ <- everything md
+    ]
 
-dataAlignmentChecker :: Checker ()
-dataAlignmentChecker () range block = case checkAlignmentHead alignment of
-    Just t  -> [(1, t)]
-    Nothing -> []
-  where
-    alignment = alignmentOf ["{", ",", "}"] $ getRange range block
+dataAlignmentChecker :: Checker [Position]
+dataAlignmentChecker positions block range =
+    if checkAlignmentHead (backwardAlignment range positions ["=", "|"] block)
+        then []
+        else [(fst range, "Improper alignment of '=', '|'")]

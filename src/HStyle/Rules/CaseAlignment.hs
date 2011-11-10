@@ -23,21 +23,21 @@ caseSelector (md, _) _ = do
     (l, alts) <- [(l, alts) | H.Case l _ alts <- exps]
 
     -- Select all alternatives
-    let ls = [ gas
-             | H.Alt _ _ ga _ <- alts
-             , gas <- case ga of
-                        H.UnGuardedAlt l' _ -> return l'
-                        H.GuardedAlts _ ga' -> map H.ann ga'
-             ]
+    let positions =
+            [ positionFromScrSpanInfo $ H.ann e
+            | H.Alt _ _ ga _ <- alts
+            , e <- case ga of
+                H.UnGuardedAlt _ e  -> [e]
+                H.GuardedAlts _ ga' -> [e | H.GuardedAlt _ _ e <- ga']
+            ]
 
-    return (map positionFromScrSpanInfo ls, rangeFromScrSpanInfo l)
+    return (positions, rangeFromScrSpanInfo l)
   where
     exps :: [H.Exp H.SrcSpanInfo]
     exps = everything md
 
 caseAlignmentChecker :: Checker [Position]
-caseAlignmentChecker positions _ _ = case checkAlignmentHead alignment of
-    Nothing -> []
-    Just t  -> [(1, t)]
-  where
-    alignment = [[(c, "->")] | (_, c) <- positions]
+caseAlignmentChecker positions block range =
+    if checkAlignmentHead (backwardAlignment range positions ["->"] block)
+        then []
+        else [(fst range, "Improper alignment of ->")]

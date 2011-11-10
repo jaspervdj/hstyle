@@ -1,16 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module HStyle.Alignment where
 
-import Data.List (find, nub, sort)
+import Data.List (sort)
 import Data.Maybe (catMaybes, listToMaybe)
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.Map as M
 
 import HStyle.Block
-
-type Lines = [Text]
-type Alignment = [[(Int, Text)]]
 
 -- | In many cases, we want to search for a specific form of
 -- "backward-alignment".
@@ -37,23 +33,11 @@ backwardAlignment range positions strings block =
             [] -> Nothing
             xs -> Just $ maximum xs
 
-checkAlignmentHead' :: [Position]
-                    -> Bool
-checkAlignmentHead' positions = equal $ catMaybes $
+checkAlignmentHead :: [Position]
+                   -> Bool
+checkAlignmentHead positions = equal $ catMaybes $
     map (listToMaybe . sort . snd) $ M.toAscList $
         foldr (\(l, c) m -> M.insertWith (++) l [c] m) M.empty positions
-
--- This is a really really long comment and I'm not sure if this is a good idea cause it might not fit on one line
-checkAlignmentHead :: Alignment
-                  -> Maybe Text
-checkAlignmentHead alignment
-    | null alignment'       = Nothing -- Isn't this comment to close?
-    | equal (map fst heads) = Nothing
-    | otherwise             = Just $ "Improper alignment of "`T.append`
-        T.pack (show $ nub $ map snd heads)
-  where
-    alignment' = filter(not . null) alignment
-    heads      = map head alignment'
 
 equal :: Eq a
       => [a]
@@ -62,14 +46,3 @@ equal (x : y : r)
     | x == y    = equal (y : r)
     | otherwise  = False
 equal _         = True
-
-alignmentOf :: [Text] -> Lines -> Alignment
-alignmentOf xs = map $ alignmentOf' 0
-  where
-    alignmentOf' i t
-        | T.null t  = []
-        | otherwise = case find (`T.isPrefixOf` t) xs of
-            Nothing -> alignmentOf' (i+1) (T.drop 1 t)
-            Just x ->
-                let len = T.length x
-                in (i, x) : alignmentOf' (i + len) (T.drop len t)
