@@ -30,12 +30,12 @@ checkStyle options file = do
         Right (md, block) -> do
             let fs = FileState file md block False True
                 fm = mapM_ runRule
-                        [ appSpacingRule
+                        [ tabsRule 4
+                        , appSpacingRule
                         , caseAlignmentRule
                         , dataAlignmentRule
                         , lineLengthRule 78
                         , patMatchAlignmentRule
-                        , tabsRule 4
                         , trailingWhiteSpaceRule
                         , typeSigAlignmentRule
                         ]

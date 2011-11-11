@@ -52,9 +52,8 @@ getFiles path = do
 -- | Is a file haskell?
 isCheckable :: FilePath -> Bool
 isCheckable fp = case takeExtension fp of
-    ".hs"  -> True
-    ".lhs" -> True
-    _      -> False
+    ".hs" -> True
+    _     -> False
 
 -- | Simple main that takes one command-line parameter of "check" or "fix" and
 -- a list of files to be checked.

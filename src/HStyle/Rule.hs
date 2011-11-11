@@ -71,12 +71,21 @@ data Fix
     deriving (Eq, Show)
 
 runRule :: Rule -> FileM ()
-runRule (Rule selector checker fixer) = do
+runRule rule@(Rule selector checker fixer) = do
     fs <- get
-    let selections = selector (fileModule fs) (fileBlock fs)
-    forM_ selections $ uncurry $ checkBlock checker fixer
+    check $ selector (fileModule fs) (fileBlock fs)
+  where
+    -- Check the files one by one. However, note that if we fixed a file, we
+    -- need to re-run the current rule, because e.g. line number might have
+    -- changed, so our selections will no longer be valid.
+    check []                    = return ()
+    check ((x, r) : selections) = do
+        fix <- checkBlock checker fixer x r
+        case fix of
+            Fixed -> runRule rule
+            _     -> check selections
 
-checkBlock :: Checker a -> Fixer a -> a -> Range -> FileM ()
+checkBlock :: Checker a -> Fixer a -> a -> Range -> FileM Fix
 checkBlock checker fixer x range = do
     -- Query monad states
     fs      <- get
@@ -85,7 +94,8 @@ checkBlock checker fixer x range = do
     -- Determine problems, and attempt to fix (lazily)
     let block         = fileBlock fs
         problems      = checker x block range
-        (fix, block') = case (optionsFix options, fixer x block range) of
+        needFix       = optionsFix options && not (null problems)
+        (fix, block') = case (needFix, fixer x block range) of
             (False, _)      -> (DontFix, block)
             (True, Nothing) -> (CouldntFix, block)
             (True, Just ls) -> (Fixed, updateRange range ls block)
@@ -97,17 +107,26 @@ checkBlock checker fixer x range = do
             T.pack (show line) `T.append` ": " `T.append` problem
         unless (optionsQuiet options) $ do
             case fix of
-                DontFix    -> return ()
-                CouldntFix -> putLn "    (Couldn't automatically fix)"
-                Fixed      -> putLn "    (Fixed)"
-            putLn "    Found:"
+                DontFix    -> putLn "    Found:"
+                CouldntFix -> putLn "    Couldn't fix:"
+                Fixed      -> putLn "    Fixed:"
             putLn $ prettyRange 4 block range
+
+    -- If we fixed anything, re-parse the module. Parsing here should really,
+    -- not fail, because if it does, we made the code unparseable with our own
+    -- fix...
+    let (module', _) = case fix of
+            Fixed -> either error id $
+                parseModule (Just $ filePath fs) (toText block')
+            _     -> (fileModule fs, block')
 
     -- Save updated file state
     put fs
-        { -- TODO: The problem is, that, when we update the code, we have to
-          -- reparse the module, otherwise there's inconsistencies.
-          fileBlock   = const block block'
+        { fileModule  = module'
+        , fileBlock   = block'
         , fileUpdated = fileUpdated fs || fix == Fixed
         , fileOk      = fileOk fs      && null problems
         }
+
+    -- Return fix resolution
+    return fix
