@@ -52,6 +52,9 @@ into the same problem.
 Customizing
 -----------
 
+Apart from an executable, the cabal file also provides a library, which can be
+used to customize `hstyle`.
+
 1. Implement your own rules, or use existing ones.
 2. Write a small program using `HStyle.Main.mainWith`, supplying your custom
    ruleset.
