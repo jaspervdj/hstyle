@@ -33,4 +33,4 @@ typeSigAlignmentChecker :: Checker [Position]
 typeSigAlignmentChecker pos block range =
     if checkAlignmentHead (backwardAlignment range pos ["::", "=>", "->"] block)
         then []
-        else [(fst range, "Improper alignment of =")]
+        else [(fst range, "Improper alignment of ::, =>, ->")]

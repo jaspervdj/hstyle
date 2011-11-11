@@ -15,7 +15,7 @@ Cabal-version:  >= 1.6
 Category:       Development
 
 Extra-source-files:
-  README.md
+  README.markdown
 
 Executable hstyle
   Ghc-options:    -Wall
