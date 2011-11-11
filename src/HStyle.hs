@@ -16,7 +16,6 @@ import HStyle.Rule
 import HStyle.Rules.AppSpacing
 import HStyle.Rules.CaseAlignment
 import HStyle.Rules.DataAlignment
-import HStyle.Rules.EolComment
 import HStyle.Rules.LineLength
 import HStyle.Rules.PatMatchAlignment
 import HStyle.Rules.Tabs
@@ -34,7 +33,6 @@ checkStyle options file = do
                         [ appSpacingRule
                         , caseAlignmentRule
                         , dataAlignmentRule
-                        , eolCommentRule
                         , lineLengthRule 78
                         , patMatchAlignmentRule
                         , tabsRule 4
