@@ -18,16 +18,21 @@ Extra-source-files:
   README.md
 
 Executable hstyle
+  Ghc-options:    -Wall
   Hs-source-dirs: src
   Main-is:        Main.hs
+
+Library
+  Hs-source-dirs: src
   Ghc-options:    -Wall
 
-  Other-modules:
-    HStyle
+  Exposed-modules:
     HStyle.Alignment
     HStyle.Block
     HStyle.Checker
     HStyle.Fixer
+    HStyle.Main
+    HStyle.Parse
     HStyle.Rule
     HStyle.Rules.AppSpacing
     HStyle.Rules.CaseAlignment
