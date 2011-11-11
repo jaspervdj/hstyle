@@ -47,6 +47,7 @@ Executable hstyle
     directory        >= 1.0  && < 1.2,
     filepath         >= 1.0  && < 1.3,
     haskell-src-exts >= 1.11 && < 1.12,
+    mtl              >= 2.0  && < 2.1,
     syb              >= 0.3  && < 0.4,
     text             >= 0.11 && < 0.12,
     vector           >= 0.7  && < 0.8

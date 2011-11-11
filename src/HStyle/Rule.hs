@@ -1,15 +1,20 @@
 {-# LANGUAGE ExistentialQuantification, OverloadedStrings #-}
 module HStyle.Rule
     ( Rule (..)
-    , FileState (..)
     , Options (..)
+    , FileState (..)
+    , FileM
+    , runFileM
     , runRule
     ) where
 
-import Control.Monad (foldM, forM_, unless)
+import Control.Monad (forM_, unless)
+import Control.Monad.Reader (ReaderT, ask, runReaderT)
+import Control.Monad.State (State, get, put, runState)
+import Control.Monad.Writer (WriterT, runWriterT, tell)
 
+import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
 
 import HStyle.Block
 import HStyle.Checker
@@ -21,8 +26,18 @@ import HStyle.Selector
 -- internal state of a rule cannot be touched from the outside.
 data Rule = forall a. Rule (Selector a) (Checker a) (Fixer a)
 
+-- | Options for checking files
+data Options = Options
+    { -- | Attempt to fix files
+      optionsFix      :: Bool
+    , -- | Be quiet
+      optionsQuiet    :: Bool
+    } deriving (Show)
+
 data FileState = FileState
-    { -- | The module in the file
+    { -- | File we're fixing
+      filePath    :: FilePath
+    , -- | The module in the file
       fileModule  :: Module
     , -- | A block holding the file contents
       fileBlock   :: Block
@@ -33,13 +48,20 @@ data FileState = FileState
       fileOk      :: Bool
     } deriving (Show)
 
--- | Options for checking files
-data Options = Options
-    { -- | Attempt to fix files
-      optionsFix   :: Bool
-    , -- | Be quiet
-      optionsQuiet :: Bool
-    } deriving (Show)
+-- | We prefer to keep the file checking out of the IO monad.
+type FileM = ReaderT Options (WriterT [Text] (State FileState))
+
+runFileM :: FileM a -> Options -> FileState -> (a, FileState, [Text])
+runFileM fm options fs =
+    -- Peel of the monads one by one
+    let w              = runReaderT fm options
+        s              = runWriterT w
+        ((x, ts), fs') = runState s fs
+    in (x, fs', ts)
+
+-- | Write some text followed by a newline
+putLn :: Text -> FileM ()
+putLn = tell . return
 
 -- | Represents fixing status
 data Fix
@@ -48,16 +70,18 @@ data Fix
     | Fixed        -- ^ Fixed, result
     deriving (Eq, Show)
 
-runRule :: Options -> FilePath -> FileState -> Rule -> IO FileState
-runRule options file fileState (Rule selector checker fixer) =
-    foldM step fileState $ selector (fileModule fileState) $ fileBlock fileState
-  where
-    step fs (x, b) = checkBlock options file checker fixer fs x b
+runRule :: Rule -> FileM ()
+runRule (Rule selector checker fixer) = do
+    fs <- get
+    let selections = selector (fileModule fs) (fileBlock fs)
+    forM_ selections $ uncurry $ checkBlock checker fixer
 
-checkBlock :: Options -> FilePath -> Checker a -> Fixer a -> FileState
-           -> a -> Range
-           -> IO FileState
-checkBlock options file checker fixer fs x range = do
+checkBlock :: Checker a -> Fixer a -> a -> Range -> FileM ()
+checkBlock checker fixer x range = do
+    -- Query monad states
+    fs      <- get
+    options <- ask
+
     -- Determine problems, and attempt to fix (lazily)
     let block         = fileBlock fs
         problems      = checker x block range
@@ -69,19 +93,18 @@ checkBlock options file checker fixer fs x range = do
     -- Output our results for this check
     forM_ problems $ \(line, problem) -> do
         -- let line = absoluteLineNumber i block
-        T.putStrLn $ T.pack file `T.append` ":" `T.append`
+        putLn $ T.pack (filePath fs) `T.append` ":" `T.append`
             T.pack (show line) `T.append` ": " `T.append` problem
         unless (optionsQuiet options) $ do
-            T.putStrLn "    Found:"
-            T.putStr $ prettyRange 4 block range
             case fix of
                 DontFix    -> return ()
-                CouldntFix -> T.putStrLn "    (Couldn't automatically fix)"
-                Fixed      -> T.putStrLn "    (Fixed)"
-            T.putStrLn ""
+                CouldntFix -> putLn "    (Couldn't automatically fix)"
+                Fixed      -> putLn "    (Fixed)"
+            putLn "    Found:"
+            putLn $ prettyRange 4 block range
 
-    -- Return updated file state
-    return fs
+    -- Save updated file state
+    put fs
         { -- TODO: The problem is, that, when we update the code, we have to
           -- reparse the module, otherwise there's inconsistencies.
           fileBlock   = const block block'

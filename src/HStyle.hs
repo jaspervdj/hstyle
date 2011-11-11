@@ -6,7 +6,7 @@ module HStyle
     , checkStyle
     ) where
 
-import Control.Monad (foldM, when)
+import Control.Monad (when)
 
 import qualified Data.Text.IO as T
 
@@ -29,18 +29,20 @@ checkStyle options file = do
     case parseModule (Just file) text of
         Left err          -> error err
         Right (md, block) -> do
-            let fs = FileState md block False True
-            fs' <- foldM (runRule options file) fs
-                [ appSpacingRule
-                , caseAlignmentRule
-                , dataAlignmentRule
-                , eolCommentRule
-                , lineLengthRule 78
-                , patMatchAlignmentRule
-                , tabsRule 4
-                , trailingWhiteSpaceRule
-                , typeSigAlignmentRule
-                ]
+            let fs = FileState file md block False True
+                fm = mapM_ runRule
+                        [ appSpacingRule
+                        , caseAlignmentRule
+                        , dataAlignmentRule
+                        , eolCommentRule
+                        , lineLengthRule 78
+                        , patMatchAlignmentRule
+                        , tabsRule 4
+                        , trailingWhiteSpaceRule
+                        , typeSigAlignmentRule
+                        ]
+                (_, fs', ts) = runFileM fm options fs
+
+            mapM_ T.putStrLn ts
             when (fileUpdated fs') $ T.writeFile file $ toText $ fileBlock fs'
             return fs'
-  where
