@@ -10,19 +10,21 @@ import Control.Monad (foldM, forM_, unless)
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Language.Haskell.Exts.Annotated as H
 
 import HStyle.Block
-import HStyle.Selector
 import HStyle.Checker
 import HStyle.Fixer
+import HStyle.Parse
+import HStyle.Selector
 
 -- | Compose the elements of a rule. Use ExistentialQuantification so the
 -- internal state of a rule cannot be touched from the outside.
 data Rule = forall a. Rule (Selector a) (Checker a) (Fixer a)
 
 data FileState = FileState
-    { -- | A block holding the file contents
+    { -- | The module in the file
+      fileModule  :: Module
+    , -- | A block holding the file contents
       fileBlock   :: Block
     , -- | Flag indicating whether or not the in-memory representation differs
       -- from the file on disk
@@ -46,12 +48,9 @@ data Fix
     | Fixed        -- ^ Fixed, result
     deriving (Eq, Show)
 
-runRule :: Options -> FilePath
-        -> (H.Module H.SrcSpanInfo, [H.Comment])
-        -> FileState -> Rule
-        -> IO FileState
-runRule options file mdc fileState (Rule selector checker fixer) =
-    foldM step fileState $ selector mdc $ fileBlock fileState
+runRule :: Options -> FilePath -> FileState -> Rule -> IO FileState
+runRule options file fileState (Rule selector checker fixer) =
+    foldM step fileState $ selector (fileModule fileState) $ fileBlock fileState
   where
     step fs (x, b) = checkBlock options file checker fixer fs x b
 

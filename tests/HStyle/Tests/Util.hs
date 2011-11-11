@@ -13,8 +13,8 @@ import HStyle.Rule
 -- | Check a module and list the errors
 testRule :: Rule -> Text -> [(Int, Text)]
 testRule (Rule selector checker _) text = do
-    let Right (md, cm, block) = parseModule Nothing text
-    (x, range) <- selector (md, cm) block
+    let Right (md, block) = parseModule Nothing text
+    (x, range) <- selector md block
     checker x block range
 
 -- | Test if a rule accepts a certain module without problems
