@@ -28,6 +28,8 @@ Overall, we don't consider it ready for production use.
 Known issues
 ------------
 
+### Comment madness
+
 Crazy `{- ... -}` comments can confuse the style checker. E.g.
 
     fib :: Int
@@ -37,6 +39,15 @@ Crazy `{- ... -}` comments can confuse the style checker. E.g.
 
 But I guess that's not the way you want to write code if you want to adhere to
 *any* style guide out there.
+
+### Literate Haskell
+
+...is currently not supported. It should not be *too* hard to implement.
+
+### Can't parse some instance declarations
+
+This is probably due to a bug(?) in `haskell-src-exts`, as the `hlint` tool runs
+into the same problem.
 
 Customizing
 -----------
